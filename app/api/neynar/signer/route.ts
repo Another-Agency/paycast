@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 const NEYNAR_API_KEY = process.env.NEXT_PUBLIC_NEYNAR_API_KEY || '';
 
-export default async function POST(req: NextRequest) {
+export async function POST(req: NextRequest) {
     const response = await fetch('https://api.neynar.com/v2/farcaster/signer', {
         method: 'POST',
         headers: {

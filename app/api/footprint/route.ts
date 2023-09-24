@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    const fp_ids = users.map(user => user.fp_id);
+    const fp_ids = users.map((user: { fp_id: string | null }) => user.fp_id || '');
 
     return NextResponse.json({ fp_ids });
   } catch (error: any) {

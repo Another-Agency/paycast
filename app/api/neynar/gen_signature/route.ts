@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { mnemonicToAccount } from "viem/accounts";
 
 const FC_ADDRESS = process.env.NEXT_PUBLIC_FC_ADDRESS || '';
-const FC_APP_FID = process.env.NEXT_PUBLIC_FC_APP_FID || '';
-const FC_ACCOUNT_MNEMONIC = process.env.NEXT_PUBLIC_FC_ACCOUNT_MNEMONIC || '';
+const FC_APP_FID = process.env.NEXT_PUBLIC_FID || '';
+const FC_ACCOUNT_MNEMONIC = process.env.NEXT_PUBLIC_FC_MNEMONIC || '';
 
 const SIGNED_KEY_REQUEST_VALIDATOR_EIP_712_DOMAIN = {
     name: "Farcaster SignedKeyRequestValidator",
@@ -18,21 +18,26 @@ const SIGNED_KEY_REQUEST_TYPE = [
 ];
 
 export async function GET(req: NextRequest) {
-    const account = mnemonicToAccount(FC_ACCOUNT_MNEMONIC);
-    const deadline = Math.floor(Date.now() / 1000) + 86400;
+    try {
+        const account = mnemonicToAccount(FC_ACCOUNT_MNEMONIC);
+        const deadline = Math.floor(Date.now() / 1000) + 86400;
 
-    const signature = await account.signTypedData({
-        domain: SIGNED_KEY_REQUEST_VALIDATOR_EIP_712_DOMAIN,
-        types: {
-            SignedKeyRequest: SIGNED_KEY_REQUEST_TYPE,
-        },
-        primaryType: "SignedKeyRequest",
-        message: {
-            requestFid: BigInt(FC_APP_FID),
-            key: FC_ADDRESS,
-            deadline: BigInt(deadline),
-        },
-    });
+        const signature = await account.signTypedData({
+            domain: SIGNED_KEY_REQUEST_VALIDATOR_EIP_712_DOMAIN,
+            types: {
+                SignedKeyRequest: SIGNED_KEY_REQUEST_TYPE,
+            },
+            primaryType: "SignedKeyRequest",
+            message: {
+                requestFid: BigInt(FC_APP_FID),
+                key: FC_ADDRESS,
+                deadline: BigInt(deadline),
+            },
+        });
 
-    return NextResponse.json({ signature });
+        return NextResponse.json({ signature });
+    } catch (error) {
+        console.error('Error generating signature', error);
+        return NextResponse.error();
+    }
 }
