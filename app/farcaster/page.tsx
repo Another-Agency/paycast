@@ -1,6 +1,7 @@
 "use client"
 
 import Link from 'next/link';
+import QRCode from 'qrcode.react';
 import { useEffect, useState } from 'react';
 
 const FC_APP_FID = process.env.NEXT_PUBLIC_FID ? Number(process.env.NEXT_PUBLIC_FID) : 0;
@@ -8,43 +9,43 @@ const FC_APP_FID = process.env.NEXT_PUBLIC_FID ? Number(process.env.NEXT_PUBLIC_
 export default function Farcaster() {
     const [signerUuid, setSignerUuid] = useState('');
     const [signature, setSignature] = useState('');
+    const [deadline, setDeadline] = useState(0); // Unix timestamp
     const [deeplink, setDeeplink] = useState('');
+    const [publicKey, setPublicKey] = useState('');
 
+    // Create signer first to get UUID and public key //
+    // UUID is returned from the createSigner function and used to register the signer
+    useEffect(() => {
+        const storedSignerUuid = localStorage.getItem('signer_uuid');
+        if (storedSignerUuid) {
+            setSignerUuid(storedSignerUuid);
+        }
+    }, [signerUuid]);
+
+    // Public key is returned from the createSigner function and passed to the generateSignature function
+    useEffect(() => {
+        const storedPublicKey = localStorage.getItem('public_key');
+        if (storedPublicKey) {
+            setPublicKey(storedPublicKey);
+        }
+    }, [publicKey]);
+
+    // Signature is returned from the generateSignature function
     useEffect(() => {
         const storedSignature = localStorage.getItem('signature');
         if (storedSignature) {
             setSignature(storedSignature);
         }
-    }, []);
+    }, [signature]);
 
+    // Deadline is returned from the generateSignature function
     useEffect(() => {
-        const storedSignerUuid = localStorage.getItem('signer_uuid');
-        if (storedSignerUuid) {
-            setSignerUuid(storedSignerUuid);
-            console.log('Stored UE Signer UUID:', storedSignerUuid);
+        const storedDeadline = localStorage.getItem('deadline');
+        if (storedDeadline) {
+            setDeadline(Number(storedDeadline));
         }
-    }, [signerUuid]);
+    }, [deadline]);
 
-    // Generate ECDSA signature for registering a signed key
-    async function generate_signature() {
-        const res = await fetch('/api/neynar/gen_signature', {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-            },
-        });
-        if (!res.ok) {
-            console.error(`HTTP error! status: ${res.status}`);
-        } else {
-            try {
-                const data = await res.json();
-                setSignature(data.signature);
-                localStorage.setItem('signature', data.signature);
-            } catch (error) {
-                console.error('Error parsing JSON:', error);
-            }
-        }
-    }
 
     const createSigner = async () => {
         try {
@@ -60,9 +61,11 @@ export default function Farcaster() {
             } else {
                 const data = await res.json();
                 console.log('Signer data:', data);
+
                 setSignerUuid(data.signer_uuid);
+                setPublicKey(data.public_key);
                 localStorage.setItem('signer_uuid', data.signer_uuid);
-                console.log('Create Signer UUID:', data.signer_uuid);
+                localStorage.setItem('public_key', data.public_key);
             }
         } catch (error) {
             if (error instanceof Error) {
@@ -71,8 +74,34 @@ export default function Farcaster() {
         };
     }
 
+    // Generate ECDSA signature for registering a signed key
+    async function generateSignature(publicKey: string) {
+
+        const res = await fetch('/api/neynar/gen_signature', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'public-key': publicKey,
+            },
+        });
+        if (!res.ok) {
+            console.error(`HTTP error! status: ${res.status}`);
+        } else {
+            try {
+                const data = await res.json();
+
+                setSignature(data.signature);
+                setDeadline(data.deadline);
+
+                localStorage.setItem('signature', data.signature);
+                localStorage.setItem('deadline', data.deadline);
+            } catch (error) {
+                console.error('Error parsing JSON:', error);
+            }
+        }
+    }
+
     const registerSigner = async () => {
-        const deadline = Math.floor(Date.now() / 1000) + 24 * 60 * 60; // current Unix timestamp + 24 hours
 
         const res = await fetch(`/api/neynar/signer/${signerUuid}`, {
             method: 'POST',
@@ -92,8 +121,8 @@ export default function Farcaster() {
         } else {
             const data = await res.json();
             console.log('Registered signer data:', data);
-            console.log('Registered signer UUID:', data.getData.signer_uuid);
-            setDeeplink(data.getData.signer_approval_url);
+
+            setDeeplink(data.registerData.signer_approval_url);
         }
     };
 
@@ -101,16 +130,16 @@ export default function Farcaster() {
         <div className="grid grid-cols-2 w-screen h-screen bg-gray-50 text-white">
             <div className="grid grid-cols-1 bg-gray-500">
                 <button
-                    onClick={generate_signature}
+                    onClick={createSigner}
                     className='bg-pink-500 p-2 justify-self-center self-center'>
-                    Generate Signature
+                    Create Signer
                 </button>
             </div>
             <div className="grid grid-cols-1 bg-violet-500">
                 <button
-                    onClick={createSigner}
+                    onClick={() => generateSignature(publicKey)}
                     className='bg-pink-500 p-2 justify-self-center self-center'>
-                    Create Signer
+                    Generate Signature
                 </button>
             </div>
             <div className="grid grid-rows-1 bg-violet-500">
@@ -120,9 +149,9 @@ export default function Farcaster() {
                     Register Signer
                 </button>
                 {deeplink && (
-                    <a href={deeplink} className='bg-pink-500 p-2 justify-self-center self-center'>
-                        Open Deeplink
-                    </a>
+                    <div className='justify-self-center self-center mb-8'>
+                        <QRCode value={deeplink} />
+                    </div>
                 )}
             </div>
             <div className="grid grid-rows-1 bg-gray-500">

@@ -13,5 +13,6 @@ export async function POST(req: NextRequest) {
 
     const data = await response.json();
     console.log('Neynar create signer data:', data);
+
     return NextResponse.json(data);
 }

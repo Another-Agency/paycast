@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { mnemonicToAccount } from "viem/accounts";
 
-const FC_ADDRESS = process.env.NEXT_PUBLIC_FC_ADDRESS || '';
+//const FC_ADDRESS = process.env.NEXT_PUBLIC_FC_ADDRESS || '';
 const FC_APP_FID = process.env.NEXT_PUBLIC_FID || '';
 const FC_ACCOUNT_MNEMONIC = process.env.NEXT_PUBLIC_FC_MNEMONIC || '';
 
@@ -20,7 +20,15 @@ const SIGNED_KEY_REQUEST_TYPE = [
 export async function GET(req: NextRequest) {
     try {
         const account = mnemonicToAccount(FC_ACCOUNT_MNEMONIC);
+        const publicKey = await req.headers.get('public-key') || '';
         const deadline = Math.floor(Date.now() / 1000) + 86400;
+
+        console.log('publicKey in route:', publicKey);
+
+        if (!publicKey) {
+            console.error('Invalid public key');
+            return NextResponse.json({ error: 'Invalid public key' }, { status: 400 });
+        }
 
         const signature = await account.signTypedData({
             domain: SIGNED_KEY_REQUEST_VALIDATOR_EIP_712_DOMAIN,
@@ -30,13 +38,15 @@ export async function GET(req: NextRequest) {
             primaryType: "SignedKeyRequest",
             message: {
                 requestFid: BigInt(FC_APP_FID),
-                key: FC_ADDRESS,
+                key: publicKey,
                 deadline: BigInt(deadline),
             },
         });
 
         console.log('Generated Signature:', signature);
-        return NextResponse.json({ signature });
+        console.log('Generated Deadline:', deadline);
+
+        return NextResponse.json({ deadline, signature });
     } catch (error) {
         console.error('Error generating signature', error);
         return NextResponse.error();
