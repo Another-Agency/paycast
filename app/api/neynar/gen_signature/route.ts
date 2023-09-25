@@ -35,6 +35,7 @@ export async function GET(req: NextRequest) {
             },
         });
 
+        console.log('Generated Signature:', signature);
         return NextResponse.json({ signature });
     } catch (error) {
         console.error('Error generating signature', error);

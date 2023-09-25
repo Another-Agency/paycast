@@ -12,6 +12,9 @@ const nextConfig = {
         // see https://styled-components.com/docs/tooling#babel-plugin for more information
         styledComponents: true,
     },
+    experimental: {
+        serverActions: true,
+    },
 }
 
 module.exports = withPWA(nextConfig);

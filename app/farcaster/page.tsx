@@ -1,32 +1,29 @@
 "use client"
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
-const FC_APP_FID = process.env.NEXT_PUBLIC_FID || 'nope';
+const FC_APP_FID = process.env.NEXT_PUBLIC_FID ? Number(process.env.NEXT_PUBLIC_FID) : 0;
 
 export default function Farcaster() {
-    const [query, setQuery] = useState('');
-    const [result, setResult] = useState(null);
     const [signerUuid, setSignerUuid] = useState('');
-    const [signedKey, setSignedKey] = useState('');
+    const [signature, setSignature] = useState('');
+    const [deeplink, setDeeplink] = useState('');
 
     useEffect(() => {
         const storedSignature = localStorage.getItem('signature');
         if (storedSignature) {
-            setSignedKey(storedSignature);
+            setSignature(storedSignature);
         }
     }, []);
-
-    useEffect(() => {
-        console.log('Signer UUID:', signerUuid);
-    }, [signerUuid]);
 
     useEffect(() => {
         const storedSignerUuid = localStorage.getItem('signer_uuid');
         if (storedSignerUuid) {
             setSignerUuid(storedSignerUuid);
+            console.log('Stored UE Signer UUID:', storedSignerUuid);
         }
-    }, []);
+    }, [signerUuid]);
 
     // Generate ECDSA signature for registering a signed key
     async function generate_signature() {
@@ -41,25 +38,13 @@ export default function Farcaster() {
         } else {
             try {
                 const data = await res.json();
-                setSignedKey(data.signature);
+                setSignature(data.signature);
                 localStorage.setItem('signature', data.signature);
             } catch (error) {
                 console.error('Error parsing JSON:', error);
             }
         }
     }
-
-    const fetchUser = async () => {
-        const res = await fetch(`/api/neynar/search_user?q=${query}`, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-            },
-        });
-
-        const data = await res.json();
-        setResult(data);
-    };
 
     const createSigner = async () => {
         try {
@@ -77,7 +62,7 @@ export default function Farcaster() {
                 console.log('Signer data:', data);
                 setSignerUuid(data.signer_uuid);
                 localStorage.setItem('signer_uuid', data.signer_uuid);
-                console.log('Signer UUID:', data.signer_uuid);
+                console.log('Create Signer UUID:', data.signer_uuid);
             }
         } catch (error) {
             if (error instanceof Error) {
@@ -88,6 +73,7 @@ export default function Farcaster() {
 
     const registerSigner = async () => {
         const deadline = Math.floor(Date.now() / 1000) + 24 * 60 * 60; // current Unix timestamp + 24 hours
+
         const res = await fetch(`/api/neynar/signer/${signerUuid}`, {
             method: 'POST',
             headers: {
@@ -97,7 +83,7 @@ export default function Farcaster() {
                 signer_uuid: signerUuid,
                 app_fid: FC_APP_FID,
                 deadline: deadline,
-                signed_key: signedKey,
+                signature: signature,
             }),
         });
 
@@ -106,6 +92,8 @@ export default function Farcaster() {
         } else {
             const data = await res.json();
             console.log('Registered signer data:', data);
+            console.log('Registered signer UUID:', data.getData.signer_uuid);
+            setDeeplink(data.getData.signer_approval_url);
         }
     };
 
@@ -131,20 +119,18 @@ export default function Farcaster() {
                     className='bg-pink-500 p-2 justify-self-center self-center'>
                     Register Signer
                 </button>
+                {deeplink && (
+                    <a href={deeplink} className='bg-pink-500 p-2 justify-self-center self-center'>
+                        Open Deeplink
+                    </a>
+                )}
             </div>
             <div className="grid grid-rows-1 bg-gray-500">
-                <div className='grid grid-cols-1 justify-self-center self-center'>
-                    <button
-                        //onClick={fetchUser}
-                        className='bg-pink-500 p-2 m-1'>
-                        Send Funds
-                    </button>
-                    <button
-                        //onClick={fetchUser}
-                        className='bg-pink-500 p-2 m-1'>
-                        Request Funds
-                    </button>
-                </div>
+                <Link href="/farcaster/paycast"
+                    className='bg-pink-500 p-2 justify-self-center self-center'>
+                    Paycast
+                </Link>
+
             </div>
         </div>
     )
