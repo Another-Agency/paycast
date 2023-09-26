@@ -20,7 +20,10 @@ const SIGNED_KEY_REQUEST_TYPE = [
 export async function GET(req: NextRequest) {
     try {
         const account = mnemonicToAccount(FC_ACCOUNT_MNEMONIC);
-        const publicKey = await req.headers.get('public-key') || '';
+
+        const publicKeyString = await req.headers.get('public-key') || '';
+        const publicKey = Buffer.from(publicKeyString, 'hex');
+
         const deadline = Math.floor(Date.now() / 1000) + 86400;
 
         console.log('publicKey in route:', publicKey);
@@ -43,12 +46,29 @@ export async function GET(req: NextRequest) {
             },
         });
 
+        console.log('Data to sign:', {
+            domain: SIGNED_KEY_REQUEST_VALIDATOR_EIP_712_DOMAIN,
+            types: {
+                SignedKeyRequest: SIGNED_KEY_REQUEST_TYPE,
+            },
+            primaryType: "SignedKeyRequest",
+            message: {
+                requestFid: BigInt(FC_APP_FID),
+                key: publicKey,
+                deadline: BigInt(deadline),
+            },
+        });
+
         console.log('Generated Signature:', signature);
         console.log('Generated Deadline:', deadline);
 
         return NextResponse.json({ deadline, signature });
-    } catch (error) {
-        console.error('Error generating signature', error);
+    } catch (error: unknown) {
+        if (error instanceof Error) {
+            console.error('Error generating signature', error.message);
+        } else {
+            console.error('An unexpected error occurred');
+        }
         return NextResponse.error();
     }
 }

@@ -64,8 +64,10 @@ export default function Farcaster() {
 
                 setSignerUuid(data.signer_uuid);
                 setPublicKey(data.public_key);
-                localStorage.setItem('signer_uuid', data.signer_uuid);
-                localStorage.setItem('public_key', data.public_key);
+                localStorage.setItem('signerData', JSON.stringify({
+                    signerUuid: data.signer_uuid,
+                    publicKey: data.public_key
+                }));
             }
         } catch (error) {
             if (error instanceof Error) {
@@ -93,8 +95,12 @@ export default function Farcaster() {
                 setSignature(data.signature);
                 setDeadline(data.deadline);
 
-                localStorage.setItem('signature', data.signature);
-                localStorage.setItem('deadline', data.deadline);
+                const storedData = JSON.parse(localStorage.getItem('signerData') || '{}');
+                localStorage.setItem('signerData', JSON.stringify({
+                    ...storedData,
+                    signature: data.signature,
+                    deadline: String(data.deadline)
+                }));
             } catch (error) {
                 console.error('Error parsing JSON:', error);
             }
@@ -164,4 +170,5 @@ export default function Farcaster() {
         </div>
     )
 }
+
 
