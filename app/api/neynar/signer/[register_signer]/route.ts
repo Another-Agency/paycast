@@ -1,4 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+
+const RequestBodySchema = z.object({
+    app_fid: z.number(),
+    signer_uuid: z.string(),
+    signature: z.string(),
+    deadline: z.number(),
+});
+
+const ResponseBodySchema = z.object({
+    signer_uuid: z.string(),
+    public_key: z.string(),
+    status: z.string(),
+    signer_approval_url: z.string(),
+});
 
 const NEYNAR_API_KEY = process.env.NEXT_PUBLIC_NEYNAR_API_KEY || '';
 
@@ -6,6 +21,13 @@ export async function POST(req: NextRequest) {
     try {
 
         const body = await new Response(req.body).json();
+
+        // Validate the request body
+        const parsedBody = RequestBodySchema.safeParse(body);
+
+        if (!parsedBody.success) {
+            return NextResponse.json({ error: parsedBody.error.message }, { status: 400 });
+        }
         console.log('body in route:', body);
         if (!req.body) {
             return NextResponse.json({ error: 'Request body is missing' }, { status: 400 });

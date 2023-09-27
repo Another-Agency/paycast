@@ -4,6 +4,7 @@ import Link from 'next/link';
 import QRCode from 'qrcode.react';
 import { useEffect, useState } from 'react';
 
+const NEYNAR_API_KEY = process.env.NEXT_PUBLIC_NEYNAR_API_KEY || '';
 const FC_APP_FID = process.env.NEXT_PUBLIC_FID ? Number(process.env.NEXT_PUBLIC_FID) : 0;
 
 export default function Farcaster() {
@@ -28,8 +29,8 @@ export default function Farcaster() {
         if (storedPublicKey) {
             setPublicKey(storedPublicKey);
         }
+        console.log('UE publicKey:', publicKey);
     }, [publicKey]);
-    console.log('UE publicKey:', publicKey);
 
     // Signature is returned from the generateSignature function
     useEffect(() => {
@@ -37,14 +38,17 @@ export default function Farcaster() {
         if (storedSignature) {
             setSignature(storedSignature);
         }
+        console.log('UE signature:', signature);
     }, [signature]);
-    console.log('UE signature:', signature);
 
     // Deadline is returned from the generateSignature function
     useEffect(() => {
         const storedDeadline = localStorage.getItem('deadline');
         if (storedDeadline) {
-            setDeadline(Number(storedDeadline));
+            console.log('Stored deadline:', storedDeadline);
+            const deadlineNumber = Number(storedDeadline);
+            console.log('Converted deadline:', deadlineNumber);
+            setDeadline(deadlineNumber);
         }
     }, [deadline]);
 
@@ -55,7 +59,13 @@ export default function Farcaster() {
                 method: 'POST',
                 headers: {
                     'Accept': 'application/json',
+                    'api_key': NEYNAR_API_KEY,
                 },
+            });
+
+            console.log('Headers:', {
+                'Accept': 'application/json',
+                'api_key': NEYNAR_API_KEY,
             });
 
             if (!res.ok) {
@@ -100,6 +110,10 @@ export default function Farcaster() {
                 localStorage.setItem('signature', data.signature);
                 localStorage.setItem('deadline', String(data.deadline));
 
+                console.log('genSig fn Signature data:', data);
+                console.log('genSig fn Signature:', data.signature);
+                console.log('genSig fn Deadline:', data.deadline);
+
             } catch (error) {
                 console.error('Error parsing JSON:', error);
             }
@@ -107,6 +121,7 @@ export default function Farcaster() {
     }
 
     const registerSigner = async () => {
+        console.log('Deadline before fetch:', deadline);
 
         const res = await fetch(`/api/neynar/signer/${signerUuid}`, {
             method: 'POST',
