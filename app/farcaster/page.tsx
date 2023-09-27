@@ -29,6 +29,7 @@ export default function Farcaster() {
             setPublicKey(storedPublicKey);
         }
     }, [publicKey]);
+    console.log('UE publicKey:', publicKey);
 
     // Signature is returned from the generateSignature function
     useEffect(() => {
@@ -37,6 +38,7 @@ export default function Farcaster() {
             setSignature(storedSignature);
         }
     }, [signature]);
+    console.log('UE signature:', signature);
 
     // Deadline is returned from the generateSignature function
     useEffect(() => {
@@ -60,14 +62,14 @@ export default function Farcaster() {
                 throw new Error(`HTTP error! status: ${res.status}`);
             } else {
                 const data = await res.json();
-                console.log('Signer data:', data);
+                console.log('Signer data returned:', data);
 
                 setSignerUuid(data.signer_uuid);
                 setPublicKey(data.public_key);
-                localStorage.setItem('signerData', JSON.stringify({
-                    signerUuid: data.signer_uuid,
-                    publicKey: data.public_key
-                }));
+
+                // use these keys in useEffect to retrieve the values
+                localStorage.setItem('signer_uuid', data.signer_uuid);
+                localStorage.setItem('public_key', data.public_key);
             }
         } catch (error) {
             if (error instanceof Error) {
@@ -76,7 +78,7 @@ export default function Farcaster() {
         };
     }
 
-    // Generate ECDSA signature for registering a signed key
+    // Pass in publicKey retrieved from createSigner function through useEffect with key of public_key
     async function generateSignature(publicKey: string) {
 
         const res = await fetch('/api/neynar/gen_signature', {
@@ -95,12 +97,9 @@ export default function Farcaster() {
                 setSignature(data.signature);
                 setDeadline(data.deadline);
 
-                const storedData = JSON.parse(localStorage.getItem('signerData') || '{}');
-                localStorage.setItem('signerData', JSON.stringify({
-                    ...storedData,
-                    signature: data.signature,
-                    deadline: String(data.deadline)
-                }));
+                localStorage.setItem('signature', data.signature);
+                localStorage.setItem('deadline', String(data.deadline));
+
             } catch (error) {
                 console.error('Error parsing JSON:', error);
             }

@@ -1,9 +1,11 @@
 "use client"
+import Image from 'next/image';
 import { useState } from "react";
 
 export default function Paycast() {
     const [result, setResult] = useState(null);
     const [query, setQuery] = useState('');
+    const [imageUrl, setImageUrl] = useState('');
 
     const fetchUser = async () => {
         const res = await fetch(`/api/neynar/search_user?q=${query}`, {
@@ -14,6 +16,7 @@ export default function Paycast() {
         });
 
         const data = await res.json();
+        setImageUrl(data.pfp_url);
         setResult(data);
     };
 
@@ -24,6 +27,7 @@ export default function Paycast() {
                     <div className="grid grid-rows-1">
                         <div className="grid grid-cols-2 justify-self-center self-center space-x-12">
                             <div className="grid grid-cols-1 justify-self-center self-center">
+                                {imageUrl && <Image src={imageUrl} alt="Profile Image" width={50} height={50} />}
                                 From FID:
                                 <input
                                     className="bg-gray-200"

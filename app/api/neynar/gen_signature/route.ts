@@ -21,12 +21,11 @@ export async function GET(req: NextRequest) {
     try {
         const account = mnemonicToAccount(FC_ACCOUNT_MNEMONIC);
 
-        const publicKeyString = await req.headers.get('public-key') || '';
-        const publicKey = Buffer.from(publicKeyString, 'hex');
+        const publicKey = await req.headers.get('public-key') || '';
+        //const publicKey = Buffer.from(publicKeyString, 'hex');
+        console.log('publicKey in route:', publicKey);
 
         const deadline = Math.floor(Date.now() / 1000) + 86400;
-
-        console.log('publicKey in route:', publicKey);
 
         if (!publicKey) {
             console.error('Invalid public key');
