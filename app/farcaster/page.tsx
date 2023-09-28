@@ -6,34 +6,24 @@ import { useState } from 'react';
 import useLocalStorage from '../hooks/useLocalStorage';
 import {
     FC_APP_FID,
-    NEYNAR_API_CREATE_SIGNER_URL,
     NEYNAR_API_KEY
 } from './utilities/constants';
-import { generateSignatureEIP712 } from './utilities/genSignature';
 
 interface SignerData {
     signer_uuid: string;
     public_key: string;
 }
 
-interface SignatureData {
-    signature: string;
-    deadline: number;
-}
-
 interface RegisterData {
     signer_uuid: string;
     app_fid: number;
-    deadline: number;
-    signature: string;
+    // deadline: number;
+    // signature: string;
 }
 
 export default function Farcaster() {
     const [signerUuid, setSignerUuid] = useLocalStorage('signer_uuid', '');
     const [publicKey, setPublicKey] = useLocalStorage('public_key', '');
-
-    const [deadline, setDeadline] = useState(0);
-    const [signature, setSignature] = useState('');
 
     const [deeplink, setDeeplink] = useState('');
 
@@ -71,46 +61,41 @@ export default function Farcaster() {
                 console.log('There was a problem with the fetch operation: ' + error.message);
             }
         }
-        console.log("After createSigner, deadline:", deadline);
-        console.log("After createSigner, signature:", signature);
 
     }
 
     // Pass in publicKey retrieved from createSigner function through useEffect with key of public_key
-    async function generateSignature(publicKey: string) {
-        try {
-            const { deadline, signature }: SignatureData = await generateSignatureEIP712(publicKey);
-            console.log("generateSignature result:", { deadline, signature });
+    // async function generateSignature(publicKey: string) {
+    //     try {
+    //         const { deadline, signature }: SignatureData = await generateSignatureEIP712(publicKey);
+    //         console.log("generateSignature result:", { deadline, signature });
 
-            setSignature(signature);
-            setDeadline(deadline);
-        } catch (error) {
-            console.error("Error in generateSignature:", error);
-            console.log("After generateSignature error, deadline:", deadline);
-            console.log("After generateSignature error, signature:", signature);
-        }
-    }
-    console.log("Render-time, deadline:", deadline);
-    console.log("Render-time, signature:", signature);
+    //         setSignature(signature);
+    //         setDeadline(deadline);
+    //     } catch (error) {
+    //         console.error("Error in generateSignature:", error);
+    //         console.log("After generateSignature error, deadline:", deadline);
+    //         console.log("After generateSignature error, signature:", signature);
+    //     }
+    // }
+    // console.log("Render-time, deadline:", deadline);
+    // console.log("Render-time, signature:", signature);
 
     const registerSigner = async () => {
-
-        console.log("Before fetch in registerSigner, deadline:", deadline);
-        console.log("Before fetch in registerSigner, signature:", signature);
 
         const registerData: RegisterData = {
             signer_uuid: signerUuid,
             app_fid: FC_APP_FID,
-            deadline: deadline,
-            signature: signature,
+            //deadline: deadline,
+            //signature: signature,
         };
-        console.log('Deadline before fetch:', deadline);
 
         try {
-            const res = await fetch(`${NEYNAR_API_CREATE_SIGNER_URL}/${signerUuid}`, {
+            const res = await fetch(`/api/neynar/signer/${signerUuid}`, {
                 method: 'POST',
                 headers: {
                     'Accept': 'application/json',
+                    public_key: publicKey,
                 },
                 body: JSON.stringify(registerData),
             });
@@ -138,7 +123,7 @@ export default function Farcaster() {
             </div>
             <div className="grid grid-cols-1 bg-violet-500">
                 <button
-                    onClick={() => generateSignature(publicKey)}
+                    //onClick={() => generateSignature(publicKey)}
                     className='bg-pink-500 p-2 justify-self-center self-center'>
                     Generate Signature
                 </button>

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from 'zod';
-
-const NEYNAR_API_KEY = process.env.NEXT_PUBLIC_NEYNAR_API_KEY || '';
+import { NEYNAR_API_KEY } from '../../../farcaster/utilities/constants';
 
 const ResponseBodySchema = z.object({
     signer_uuid: z.string(),
@@ -16,7 +15,6 @@ const RequestHeadersSchema = z.object({
     }),
     api_key: z.string().optional(),
 });
-
 
 export async function POST(req: NextRequest) {
 

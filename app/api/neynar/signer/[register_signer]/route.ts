@@ -1,25 +1,37 @@
+import { NEYNAR_API_KEY } from "@/app/farcaster/utilities/constants";
+import { generateSignatureEIP712 } from "@/app/farcaster/utilities/genSignature";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 const RequestBodySchema = z.object({
     app_fid: z.number(),
     signer_uuid: z.string(),
-    signature: z.string(),
-    deadline: z.number(),
 });
 
-const ResponseBodySchema = z.object({
-    signer_uuid: z.string(),
+const RequestHeadersSchema = z.object({
+    accept: z.string().optional().refine(value => value?.includes('application/json'), {
+        message: 'Accept header must include application/json',
+    }),
     public_key: z.string(),
-    status: z.string(),
-    signer_approval_url: z.string(),
 });
-
-const NEYNAR_API_KEY = process.env.NEXT_PUBLIC_NEYNAR_API_KEY || '';
 
 export async function POST(req: NextRequest) {
-    try {
 
+    const headersObj = Object.fromEntries(req.headers);
+    const parsedHeaders = RequestHeadersSchema.safeParse(headersObj);
+
+    if (!parsedHeaders.success) {
+        console.error("Invalid headers", parsedHeaders.error);
+        return NextResponse.json({ error: "Invalid headers" }, { status: 400 });
+    }
+
+    // Retrieve and validate the public key from the headers
+    const publicKey = parsedHeaders.data.public_key;
+    if (!publicKey) {
+        return NextResponse.json({ error: "Public key is missing from headers" }, { status: 400 });
+    }
+
+    try {
         const body = await new Response(req.body).json();
 
         // Validate the request body
@@ -28,34 +40,19 @@ export async function POST(req: NextRequest) {
         if (!parsedBody.success) {
             return NextResponse.json({ error: parsedBody.error.message }, { status: 400 });
         }
-        console.log('body in route:', body);
-        if (!req.body) {
-            return NextResponse.json({ error: 'Request body is missing' }, { status: 400 });
-        }
 
         const signerUuid = body.signer_uuid;
-        console.log('signerUuid in route:', signerUuid);
         if (!signerUuid) {
             return NextResponse.json({ error: 'Request body is missing the signer_uuid field' }, { status: 400 });
         }
 
         const app_fid = body.app_fid;
-        console.log('app_fid in route:', app_fid);
         if (!app_fid || typeof app_fid !== 'number') {
             return NextResponse.json({ error: 'Request body is missing the app_fid field or it is not a number' }, { status: 400 });
         }
 
-        const signature = body.signature;
-        console.log('signature in route:', signature);
-        if (!signature) {
-            return NextResponse.json({ error: 'Request body is missing the signed_key field' }, { status: 400 });
-        }
-
-        const deadline = body.deadline;
-        console.log('deadline in route:', deadline);
-        if (!deadline || typeof deadline !== 'number') {
-            return NextResponse.json({ error: 'Request body is missing the deadline field or it is not a number' }, { status: 400 });
-        }
+        // Pass the validated publicKey to the generateSignatureEIP712 function
+        const { deadline, signature } = await generateSignatureEIP712(publicKey);
 
         const registerRes = await fetch('https://api.neynar.com/v2/farcaster/signer/signed_key', {
             method: 'POST',
@@ -75,7 +72,6 @@ export async function POST(req: NextRequest) {
             // ... existing error handling code ...
         } else {
             const registerData = await registerRes.json();
-            console.log('Registered signer data:', registerData);
 
             // Return the registration data immediately
             return NextResponse.json({ registerData });
