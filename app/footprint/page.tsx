@@ -4,8 +4,8 @@ import '@onefootprint/footprint-js/dist/footprint-js.css';
 import { FootprintVerifyButton } from '@onefootprint/footprint-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { FP_PLAYBOOK_KYB, FP_PLAYBOOK_KYC } from './constants';
 
-const fpPublishKey = process.env.NEXT_PUBLIC_FP_PLAYBOOK_KYB;
 
 export default function Footprint() {
     const [validationToken, setValidationToken] = useState(null) as any;
@@ -102,7 +102,7 @@ export default function Footprint() {
             <div className="grid grid-cols-1 bg-gray-500">
                 <div className='bg-pink-500 grid-rows-1 p-2 justify-self-center self-center'>
                     <FootprintVerifyButton
-                        publicKey={fpPublishKey}
+                        publicKey={FP_PLAYBOOK_KYB}
                         dialogVariant='modal'
                         onComplete={(valToken) => {
                             console.log("on completed", valToken);
@@ -112,6 +112,21 @@ export default function Footprint() {
                             console.log("user canceled!");
                         }}
                     />
+                    KYB Button
+                </div>
+                <div className='bg-pink-500 grid-rows-1 p-2 justify-self-center self-center'>
+                    <FootprintVerifyButton
+                        publicKey={FP_PLAYBOOK_KYC}
+                        dialogVariant='modal'
+                        onComplete={(valToken) => {
+                            console.log("on completed", valToken);
+                            setValidationToken(valToken);
+                        }}
+                        onCancel={() => {
+                            console.log("user canceled!");
+                        }}
+                    />
+                    KYC Button
                 </div>
                 <Link href={'/footprint/vault'} className='bg-pink-500 grid-rows-1 p-2 justify-self-center self-center'>
                     Vault
