@@ -97,6 +97,7 @@ export default function Footprint() {
         setSelectedFields(Array.from(event.target.selectedOptions, (option: any) => (option as HTMLOptionElement).value));
     };
 
+
     return (
         <div className="grid grid-cols-2 w-screen h-screen bg-gray-50">
             <div className="grid grid-cols-1 bg-gray-500">
