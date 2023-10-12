@@ -17,14 +17,27 @@ export default function Home() {
         </Link>
       </div>
       <div className="grid grid-cols-1 bg-yellow-500">
-        <div className='bg-violet-500 p-2 justify-self-center self-center'>
-          <Link
-            href={'/farcaster'}
-            className='bg-pink-500 p-2 justify-self-center self-center'>
-            Farcaster
-          </Link>
-        </div>
+        <Link
+          href={'/farcaster'}
+          className='bg-pink-500 p-2 justify-self-center self-center'>
+          Farcaster
+        </Link>
       </div>
+      <div className="grid grid-cols-1 bg-yellow-500">
+        <Link
+          href={'/siwe'}
+          className='bg-pink-500 p-2 justify-self-center self-center'>
+          SIWE
+        </Link>
+      </div>
+      <div className="grid grid-cols-1 bg-gray-500">
+        <Link
+          href={'/pylon'}
+          className='bg-pink-500 p-2 justify-self-center self-center'>
+          Pylon
+        </Link>
+      </div>
+
     </div>
   )
 }

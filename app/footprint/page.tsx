@@ -4,7 +4,7 @@ import '@onefootprint/footprint-js/dist/footprint-js.css';
 import { FootprintVerifyButton } from '@onefootprint/footprint-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { FP_PLAYBOOK_KYB, FP_PLAYBOOK_KYC } from './constants';
+import { FP_PLAYBOOK_KYB, FP_PLAYBOOK_KYC } from '../../lib/constants';
 
 
 export default function Footprint() {
